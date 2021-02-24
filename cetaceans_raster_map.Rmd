@@ -31,8 +31,9 @@ plot(ls_2)
 
 ```{r}
 presence <- function(x, thresh = 0.8) {
-  return(ifelse(x >= thresh, 1, 0))
+  return(ifelse(x >= thresh, 1, NA))
 }
+
 w1 <- calc(ls_1, fun=presence)
 w2 <- calc(ls_2, fun=presence)
 
@@ -44,8 +45,25 @@ plot(w1 + w2)
 
 ```
 
+```{r}
+# Read in raster files
+
+raster_files <-list.files(path = here('ca_cetaceans'), full.names = TRUE)
 
 
+#ls1 <- raster(raster_files[1])
+
+all_whales <- raster::stack(raster_files)
+presence_layers <- calc(all_whales, fun=presence)
+
+plot(presence_layers)
+```
+
+
+```{r}
+diversity <- calc(presence_layers, fun=sum, na.rm=T)
+plot(diversity)
+```
 
 
 
