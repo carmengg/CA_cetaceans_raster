@@ -1,0 +1,55 @@
+---
+title: "cetaceans_raster_map"
+author: "Carmen Galaz-García"
+date: "2/22/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(raster)
+library(tidyverse)
+library(here)
+library(sf)
+library(fasterize)
+```
+
+
+```{r}
+file_1 <- here('ca_cetaceans/Balaenoptera_acutorostrata.tif')
+file_2 <- here('ca_cetaceans/Balaenoptera_borealis.tif')
+
+ls_1 <- raster(file_1)
+ls_2 <- raster(file_2)
+
+plot(ls_1)
+plot(ls_2)
+```
+
+## Preparing the data
+
+```{r}
+presence <- function(x, thresh = 0.8) {
+  return(ifelse(x >= thresh, 1, 0))
+}
+w1 <- calc(ls_1, fun=presence)
+w2 <- calc(ls_2, fun=presence)
+
+
+plot(w1)
+plot(w2)
+
+plot(w1 + w2)
+
+```
+
+
+
+
+
+
+
+
+
+
