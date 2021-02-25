@@ -81,7 +81,7 @@ trial_df<- raster::rasterToPoints(trial) %>%
 
 ggplot()+
   geom_raster(data = trial_df, aes(x = x, y = y, fill = layer))+  
-  scale_fill_gradient(low = 'white', high = 'blue4')+
+  scale_fill_gradient(low = 'lightblue', high = 'blue4')+
   geom_sf(data=ne_coastline(scale = 50, returnclass = 'sf'))+
   coord_sf(xlim=xlim, ylim=ylim)+
   labs(x="Longitude",
