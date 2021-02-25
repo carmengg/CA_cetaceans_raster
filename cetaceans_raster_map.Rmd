@@ -20,78 +20,80 @@ library(sp)
 
 
 ```{r}
-file_1 <- here('ca_cetaceans/Balaenoptera_acutorostrata.tif')
-file_2 <- here('ca_cetaceans/Balaenoptera_borealis.tif')
+# ----- READ IN RASTER FILES -----
+raster_files <-list.files(path = here('ca_cetaceans'), full.names = TRUE)
 
-ls_1 <- raster(file_1)
-ls_2 <- raster(file_2)
+all_whales <- raster::stack(raster_files)
 
-plot(ls_1)
-plot(ls_2)
 ```
 
-## Preparing the data
 
 ```{r}
+# ----- CALCULATING PRESENCE -------
 presence <- function(x, thresh = 0.8) {
   return(ifelse(x >= thresh, 1, NA))
 }
 
-w1 <- calc(ls_1, fun=presence)
-w2 <- calc(ls_2, fun=presence)
-
-
-plot(w1)
-plot(w2)
-
-plot(w1 + w2)
-
-```
-
-```{r}
-# Read in raster files
-
-raster_files <-list.files(path = here('ca_cetaceans'), full.names = TRUE)
-
-
-#ls1 <- raster(raster_files[1])
-
-all_whales <- raster::stack(raster_files)
 presence_layers <- calc(all_whales, fun=presence)
+#plot(presence_layers)
 
-plot(presence_layers)
-```
+#----- CALCULATING DIVERSITY --------
+diversity <- calc(presence_layers, fun=sum, na.rm=TRUE)
+#plot(diversity)
 
+# ---- PLOTING DIVERSITY RASTER ----
 
-```{r}
-diversity <- calc(presence_layers, fun=sum, na.rm=T)
-plot(diversity)
-```
-
-
-
-```{r}
-coastline110 <- ne_download(scale = 110, type = 'coastline', category = 'physical', returnclass = "sf")
-
-plot(coastline110)
-```
-
-```{r}
-diversity <- raster::rasterToPoints(diversity) %>%
+#convert to data frame
+diversity_df <- raster::rasterToPoints(diversity) %>%
   as.data.frame()
 
-ggplot(data = diversity_df, aes(x = x, y = y, fill = layer)) +
-  geom_raster() +
-  coord_sf(expand = 0) +
+# make raster map
+ggplot() +
+  geom_raster(data = diversity_df, aes(x = x, y = y, fill = layer)) +
   scale_fill_gradient(low = 'white', high = 'blue4')+
-  labels(layer = 'Number of cetacean species')
-
-
-  geom_raster(data = forest_df, fill = 'green') +
+  coord_sf(expand = 0)
   
-  theme_void() +
-  theme(panel.background = element_rect(fill = 'slateblue4'))
 ```
 
+```{r}
+# ---- RASTER + SHAPEFILE MAP ATTEMPT 1 ----
+
+# ca_counties <- read_sf(here("ca_counties","CA_Counties_TIGER2016.shp"))
+ca_boundary <- read_sf(here("ca_state_boundary","CA_State_TIGER2016.shp"))
+ggplot()+
+  geom_sf(data=ca_boundary)
+
+xlim <- c(-125,-114)
+ylim <- c(32,43) 
+
+ggplot()+
+  geom_sf(data=ca_boundary)+
+  geom_raster(data = diversity_df, aes(x = x, y = y, fill = layer))+
+  coord_sf(xlim=xlim, ylim=ylim)
+
+
+```
+
+
+```{r}
+# ---- RASTER + SHAPEFILE MAP ATTEMPT 2 ----
+coastline110 <- ne_download(scale = 110, 
+                            type = 'coastline', 
+                            category = 'physical', 
+                            returnclass = "sf")
+
+plot(coastline110)
+
+sp::plot(ne_coastline())+
+  coord_sf(xlim=xlim, ylim=ylim)
+
+  scale_fill_gradient(low = 'white', high = 'blue4')+
+
+
+ggplot()+
+  geom_raster(data = diversity_df, aes(x = x, y = y, fill = layer))+  
+  geom_sf(data=ne_coastline(returnclass = 'sf'))+
+  coord_sf(xlim=xlim, ylim=ylim)
+```
 
 
