@@ -40,60 +40,52 @@ presence_layers <- calc(all_whales, fun=presence)
 #----- CALCULATING DIVERSITY --------
 diversity <- calc(presence_layers, fun=sum, na.rm=TRUE)
 #plot(diversity)
-
-# ---- PLOTING DIVERSITY RASTER ----
-
-#convert to data frame
-diversity_df <- raster::rasterToPoints(diversity) %>%
-  as.data.frame()
-
-# make raster map
-ggplot() +
-  geom_raster(data = diversity_df, aes(x = x, y = y, fill = layer)) +
-  scale_fill_gradient(low = 'white', high = 'blue4')+
-  coord_sf(expand = 0)
   
 ```
 
+
+
 ```{r}
-# ---- RASTER + SHAPEFILE MAP ATTEMPT 1 ----
+# ---- RASTER + SHAPEFILE MAP ----
 
-# ca_counties <- read_sf(here("ca_counties","CA_Counties_TIGER2016.shp"))
-ca_boundary <- read_sf(here("ca_state_boundary","CA_State_TIGER2016.shp"))
-ggplot()+
-  geom_sf(data=ca_boundary)
+#convert raster to data frame
+diversity_df <- raster::rasterToPoints(diversity) %>%
+  as.data.frame()
 
+# coord limits
 xlim <- c(-125,-114)
 ylim <- c(32,43) 
 
-ggplot()+
-  geom_sf(data=ca_boundary)+
-  geom_raster(data = diversity_df, aes(x = x, y = y, fill = layer))+
-  coord_sf(xlim=xlim, ylim=ylim)
-
-
-```
-
-
-```{r}
-# ---- RASTER + SHAPEFILE MAP ATTEMPT 2 ----
-coastline110 <- ne_download(scale = 110, 
-                            type = 'coastline', 
-                            category = 'physical', 
-                            returnclass = "sf")
-
-plot(coastline110)
-
-sp::plot(ne_coastline())+
-  coord_sf(xlim=xlim, ylim=ylim)
-
-  scale_fill_gradient(low = 'white', high = 'blue4')+
-
-
+# map
 ggplot()+
   geom_raster(data = diversity_df, aes(x = x, y = y, fill = layer))+  
-  geom_sf(data=ne_coastline(returnclass = 'sf'))+
-  coord_sf(xlim=xlim, ylim=ylim)
+  scale_fill_gradient(low = 'white', high = 'blue4')+
+  geom_sf(data=ne_coastline(scale = 50, returnclass = 'sf'))+
+  coord_sf(xlim=xlim, ylim=ylim)+
+  labs(x="Longitude",
+       y="Latitutde",
+       fill="Number of Cetacean Species",
+       title = "Cetaceans Species Richness in the California Coast")
 ```
 
 
+```{r create mask from polygons, eval = FALSE}
+zero2NA <- function(x){
+  return(ifelse(x==0, NA, x))
+}
+  
+trial <-calc(diversity, fun=zero2NA)
+
+trial_df<- raster::rasterToPoints(trial) %>%
+  as.data.frame()
+
+ggplot()+
+  geom_raster(data = trial_df, aes(x = x, y = y, fill = layer))+  
+  scale_fill_gradient(low = 'white', high = 'blue4')+
+  geom_sf(data=ne_coastline(scale = 50, returnclass = 'sf'))+
+  coord_sf(xlim=xlim, ylim=ylim)+
+  labs(x="Longitude",
+       y="Latitutde",
+       fill="Number of Cetacean Species",
+       title = "Cetaceans Species Richness in the California Coast")
+```
