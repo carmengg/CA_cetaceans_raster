@@ -13,6 +13,9 @@ library(tidyverse)
 library(here)
 library(sf)
 library(fasterize)
+
+library(rnaturalearth)
+library(sp)
 ```
 
 
@@ -67,7 +70,28 @@ plot(diversity)
 
 
 
+```{r}
+coastline110 <- ne_download(scale = 110, type = 'coastline', category = 'physical', returnclass = "sf")
 
+plot(coastline110)
+```
+
+```{r}
+diversity <- raster::rasterToPoints(diversity) %>%
+  as.data.frame()
+
+ggplot(data = diversity_df, aes(x = x, y = y, fill = layer)) +
+  geom_raster() +
+  coord_sf(expand = 0) +
+  scale_fill_gradient(low = 'white', high = 'blue4')+
+  labels(layer = 'Number of cetacean species')
+
+
+  geom_raster(data = forest_df, fill = 'green') +
+  
+  theme_void() +
+  theme(panel.background = element_rect(fill = 'slateblue4'))
+```
 
 
 
